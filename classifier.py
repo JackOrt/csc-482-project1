@@ -2,16 +2,19 @@
 import random
 import os
 import codecs
+import re
 from statistics import variance
 from bs4 import BeautifulSoup
 # from nltk.corpus import movie_reviews
 from nltk.corpus import wordnet as wn
 from nltk.tokenize import word_tokenize, sent_tokenize
+from nltk.classify import NaiveBayesClassifier
 from nltk.tag import pos_tag
 
 TRAINING_DATA = "http://users.csc.calpoly.edu/~foaad/proj1F21_files.zip"
 TRAINING_DATA_CURRENT = "http://users.csc.calpoly.edu/~foaad/proj1S23_files.zip"
 PATH_SIMILARITY_CUTOFF = 0.24
+TEST_SIZE = 0.2
 
 # features for both classifiers
 #   average sentence length
@@ -29,6 +32,7 @@ PATH_SIMILARITY_CUTOFF = 0.24
 #   number of appearences of (am are is was were be being been) per sentence
 #   sentence length variance
 #   word length variance
+#   
 
 # given a list of sentences return the
 # average sentence length
@@ -63,9 +67,11 @@ def get_sim_count(words, target):
     count = 0
     target_syn = wn.synsets(target)[0]
     for word in words:
-        word_syn = wn.synsets(word)[0]
-        if word_syn.path_similarity(target_syn) > PATH_SIMILARITY_CUTOFF:
-            count += 1
+        syns = wn.synsets(word)
+        if len(syns) > 0:
+            word_syn = wn.synsets(word)[0]
+            if word_syn.path_similarity(target_syn) > PATH_SIMILARITY_CUTOFF:
+                count += 1
     return count
 
 # given a list of sentences, return 
@@ -74,7 +80,8 @@ def get_sim_count(words, target):
 def get_punc_density(sents):
     count = 0
     for sent in sents:
-        tagged = pos_tag(sent)
+        tokens = word_tokenize(sent)
+        tagged = pos_tag(tokens)
         for word_tag in tagged:
             if word_tag[1] == ".":
                 count += 1
@@ -123,6 +130,8 @@ def download_zip(url, directory_label):
     z = zipfile.ZipFile(io.BytesIO(r.content))
     z.extractall(os.path.join(".", directory_label))
 
+# return a list of words for all html documents in 
+# the given directory 
 def get_dir_tokens(directory, filter=""):
     tokens=[]
     print(directory)
@@ -132,18 +141,101 @@ def get_dir_tokens(directory, filter=""):
                 raw = BeautifulSoup(file, 'html.parser').get_text()
                 tokens += word_tokenize(raw)
     return tokens
+    
+# get a list of sentences in the file 
+# at the given path
+def get_file_sents(path):
+    sents=[]
+    with open(path, "r") as file:
+        raw = BeautifulSoup(file, 'html.parser').get_text()
+        sents = sent_tokenize(raw)
+    return sents
+
+# get a list of words in the file 
+# at the given path
+def get_file_words(path):
+    words=[]
+    with open(path, "r") as file:
+        raw = BeautifulSoup(file, 'html.parser').get_text()
+        words = word_tokenize(raw)
+    return words
+
+def print_file(path):
+    with open(path, "r") as file:
+        raw = BeautifulSoup(file, 'html.parser').get_text()
+        print(raw)
+
+# get all training data from a directory
+def get_features(directory, filter="", topic=True):
+    data = []
+    for html in os.listdir(directory):
+        if filter in html:
+            with open(os.path.join(directory, html), "r", encoding='utf-8') as file:
+                raw = BeautifulSoup(file, 'html.parser').get_text()
+                sents = sent_tokenize(raw)
+                words = word_tokenize(raw)
+                #both classifiers
+                features = {}
+                features["sent_len"] = get_average_sentence_length(sents)
+                features["word_len"] = get_average_word_length(sents)
+                features["num_sents"] = len(sents)
+                features["num_words"] = len(words)
+                if topic:
+                    features["NNP"] = get_num_NNP(words)
+                    features["vehicle_dist"] = get_sim_count(words, "vehicle")
+                    features["person_dist"] = get_sim_count(words, "person")
+                    if "A" in html:
+                        data.append((features, "A"))
+                    else:
+                        data.append((features, "B"))
+                else:
+                    features["punct_dens"] = get_punc_density(sents)
+                    features["tobe"] = get_tobe_count(sents)
+                    features["sent_var"] = get_sent_variance(sents)
+                    features["word_var"] = get_word_variance(words)
+                    found = re.search("\d\d\d\d", html)
+                    data.append((features, found[0]))              
+    return data
+
+def train_test_bayes(data):
+    split = int(len(data) * TEST_SIZE)
+    random.shuffle(data)
+    train_set = data[split:]
+    test_set = data[:split]
+    test_features = [x[0] for x in test_set]
+    test_categories = [x[1] for x in test_set]
+
+    classifier = NaiveBayesClassifier.train(train_set)
+    accuracy = get_accuracy(test_features, test_categories, classifier)
+    print(accuracy)
+
+def get_accuracy(test_features, test_categories, classifier):
+    correct = 0
+    guesses = classifier.classify_many(test_features)
+    for i in range(len(guesses)):
+        if test_categories[i] == guesses[i]:
+            correct += 1
+    return float(correct) / len(test_features)
 
 def main():
     download_zip(TRAINING_DATA, "training_set")
     download_zip(TRAINING_DATA_CURRENT, "training_set_current")
-    training_tokens_A = get_dir_tokens(os.path.join(".", os.path.join("training_set", "proj1F21_files")), "A")
-    training_tokens_B = get_dir_tokens(os.path.join(".", os.path.join("training_set", "proj1F21_files")), "B")
-    new_training_tokens_A = get_dir_tokens(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), "A")
-    new_training_tokens_B = get_dir_tokens(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), "B")
-    print(training_tokens_A[100])
-    print(training_tokens_B[100])
-    print(new_training_tokens_A[100])
-    print(new_training_tokens_B[100])
+
+    # data = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")))
+    data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")))
+    data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")))
+    data = data_1 + data_2
+    train_test_bayes(data)
+
+    # training_tokens_A = get_dir_tokens(os.path.join(".", os.path.join("training_set", "proj1F21_files")), "A")
+    # training_tokens_B = get_dir_tokens(os.path.join(".", os.path.join("training_set", "proj1F21_files")), "B")
+    # new_training_tokens_A = get_dir_tokens(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), "A")
+    # new_training_tokens_B = get_dir_tokens(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), "B")
+    # print(training_tokens_A[100])
+    # print(training_tokens_B[100])
+    # print(new_training_tokens_A[100])
+    # print(new_training_tokens_B[100])
+    # print_file("./training_set/proj1F21_files/proj1F21_1483_A.html")
 
 if __name__=="__main__":
     main()
