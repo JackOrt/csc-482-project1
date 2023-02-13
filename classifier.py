@@ -193,6 +193,60 @@ def print_file(path):
         raw = BeautifulSoup(file, 'html.parser').get_text()
         print(raw)
 
+def features_topic_doc(directory):
+    data = []
+    sw = set(stopwords.words('english'))
+    for html in os.listdir(directory):
+        if filter in html:
+            with open(os.path.join(directory, html), "r", encoding='utf-8') as file:
+                raw = BeautifulSoup(file, 'html.parser').get_text()
+                features = {}
+                sents = sent_tokenize(raw)
+                words = word_tokenize(raw)
+                features["sent_len"] = get_average_sentence_length(sents)
+                features["word_len"] = get_average_word_length(sents)
+                features["num_sents"] = len(sents)
+                features["num_words"] = len(words)
+                bow = get_bag_o_words(words, sw)
+                bgrams = get_bigrams(words)
+                features.update(bow)
+                features.update(bgrams)
+                features["NNP"] = get_num_NNP(words)
+                features["vehicle_dist"] = get_sim_count(words, "vehicle")
+                features["person_dist"] = get_sim_count(words, "person")
+                if "A" in html:
+                    data.append((features, "A"))
+                else:
+                    data.append((features, "B"))             
+    return data
+
+def features_topic_paras(directory):
+    data = []
+    sw = set(stopwords.words('english'))
+    for html in os.listdir(directory):
+        if filter in html:
+            with open(os.path.join(directory, html), "r", encoding='utf-8') as file:
+                raw = BeautifulSoup(file, 'html.parser').get_text()
+                features = {}
+                sents = sent_tokenize(raw)
+                words = word_tokenize(raw)
+                features["sent_len"] = get_average_sentence_length(sents)
+                features["word_len"] = get_average_word_length(sents)
+                features["num_sents"] = len(sents)
+                features["num_words"] = len(words)
+                bow = get_bag_o_words(words, sw)
+                bgrams = get_bigrams(words)
+                features.update(bow)
+                features.update(bgrams)
+                features["NNP"] = get_num_NNP(words)
+                features["vehicle_dist"] = get_sim_count(words, "vehicle")
+                features["person_dist"] = get_sim_count(words, "person")
+                if "A" in html:
+                    data.append((features, "A"))
+                else:
+                    data.append((features, "B"))             
+    return data
+
 # get all training data from a directory
 def get_features(directory, filter="", topic=True):
     data = []
