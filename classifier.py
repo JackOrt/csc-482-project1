@@ -8,8 +8,12 @@ from bs4 import BeautifulSoup
 # from nltk.corpus import movie_reviews
 import nltk
 from nltk.corpus import wordnet as wn
+from nltk.corpus import stopwords
+from nltk.util import bigrams
 from nltk.tokenize import word_tokenize, sent_tokenize
 from nltk.classify import NaiveBayesClassifier
+from nltk.stem import WordNetLemmatizer as ltz
+from nltk.classify import DecisionTreeClassifier
 from nltk.tag import pos_tag
 
 TRAINING_DATA = "http://users.csc.calpoly.edu/~foaad/proj1F21_files.zip"
@@ -117,6 +121,29 @@ def get_word_variance(words):
         word_lengths.append(len(word))
     return variance(word_lengths)
 
+def get_bag_o_words(words, stopwords):
+    lemmatizer = ltz()
+    freqs = {}
+    for word in words:
+        formatted = lemmatizer.lemmatize(word.lower())
+        if formatted not in stopwords:
+            if formatted not in freqs:
+                freqs[formatted] = 1
+            else:
+                freqs[formatted] += 1
+    return freqs
+
+def get_bigrams(words):
+    bgrams = bigrams([word.lower() for word in words])
+    freqs = {}
+    for gram in bgrams:
+        if gram in freqs:
+            freqs[gram] += 1
+        else:
+            freqs[gram] = 1
+    return freqs
+
+
 def find_features(document, word_features):
     words = set(document)
     features = {}
@@ -175,12 +202,17 @@ def get_features(directory, filter="", topic=True):
                 raw = BeautifulSoup(file, 'html.parser').get_text()
                 sents = sent_tokenize(raw)
                 words = word_tokenize(raw)
+                sw = set(stopwords.words('english'))
                 #both classifiers
                 features = {}
                 features["sent_len"] = get_average_sentence_length(sents)
                 features["word_len"] = get_average_word_length(sents)
                 features["num_sents"] = len(sents)
                 features["num_words"] = len(words)
+                bow = get_bag_o_words(words, sw)
+                bgrams = get_bigrams(words)
+                features.update(bow)
+                features.update(bgrams)
                 if topic:
                     features["NNP"] = get_num_NNP(words)
                     features["vehicle_dist"] = get_sim_count(words, "vehicle")
@@ -207,6 +239,7 @@ def train_test_bayes(data):
     test_categories = [x[1] for x in test_set]
 
     classifier = NaiveBayesClassifier.train(train_set)
+    # classifier = DecisionTreeClassifier.train(train_set)
     accuracy = get_accuracy(test_features, test_categories, classifier)
     print(accuracy)
 
