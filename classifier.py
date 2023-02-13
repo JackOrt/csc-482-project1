@@ -1,4 +1,10 @@
-
+#Contributors: Isaac Forsmann, Leticia Mezzetti, Jack Ortega
+#Description:  Traing and test several classification models for essay topic (Person - A or Car - B) 
+#              and for author, as designated by four digits in the input html file name for members of 
+#              our dataset.
+#Usage:        
+#NAIVE BAYES:       python classifier.py
+#DECISION TREE:     python classifier.py -DTC          
 import random
 import os
 import codecs
