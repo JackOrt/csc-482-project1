@@ -230,6 +230,41 @@ def get_features(directory, filter="", topic=True):
                     data.append((features, found[0]))              
     return data
 
+# get all training data from a directory
+def get_features_file(file_path, filter="", topic=False):
+    data = []
+    with open(file_path, "r", encoding='utf-8') as file:
+        raw = file.read()
+        sents = sent_tokenize(raw)
+        words = word_tokenize(raw)
+        sw = set(stopwords.words('english'))
+        #both classifiers
+        features = {}
+        features["sent_len"] = get_average_sentence_length(sents)
+        features["word_len"] = get_average_word_length(sents)
+        features["num_sents"] = len(sents)
+        features["num_words"] = len(words)
+        bow = get_bag_o_words(words, sw)
+        bgrams = get_bigrams(words)
+        features.update(bow)
+        features.update(bgrams)
+        if topic:
+            features["NNP"] = get_num_NNP(words)
+            features["vehicle_dist"] = get_sim_count(words, "vehicle")
+            features["person_dist"] = get_sim_count(words, "person")
+            if "A" in file_path:
+                data.append((features, "A"))
+            else:
+                data.append((features, "B"))
+        else:
+            features["punct_dens"] = get_punc_density(sents)
+            features["tobe"] = get_tobe_count(sents)
+            features["sent_var"] = get_sent_variance(sents)
+            features["word_var"] = get_word_variance(words)
+            #found = re.search("\d\d\d\d", file_path)
+            #data.append((features, found[0]))              
+        return features    
+
 def train_test_bayes(data):
     split = int(len(data) * TEST_SIZE)
     random.shuffle(data)
@@ -242,6 +277,7 @@ def train_test_bayes(data):
     # classifier = DecisionTreeClassifier.train(train_set)
     accuracy = get_accuracy(test_features, test_categories, classifier)
     print(accuracy)
+    return classifier
 
 def get_accuracy(test_features, test_categories, classifier):
     correct = 0
@@ -253,6 +289,7 @@ def get_accuracy(test_features, test_categories, classifier):
 
 def main():
     nltk.download('averaged_perceptron_tagger')
+    nltk.download('stopwords')
 
     download_zip(TRAINING_DATA, "training_set")
     download_zip(TRAINING_DATA_CURRENT, "training_set_current")
@@ -261,8 +298,12 @@ def main():
     data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")))
     data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")))
     data = data_1 + data_2
-    train_test_bayes(data)
+    bayes = train_test_bayes(data)
 
+    #hardcoded for now
+    input_features = get_features_file("./vehicle_test_paragraph.txt")
+
+    print(bayes.classify(input_features))
     # training_tokens_A = get_dir_tokens(os.path.join(".", os.path.join("training_set", "proj1F21_files")), "A")
     # training_tokens_B = get_dir_tokens(os.path.join(".", os.path.join("training_set", "proj1F21_files")), "B")
     # new_training_tokens_A = get_dir_tokens(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), "A")
