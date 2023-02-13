@@ -363,8 +363,12 @@ def train_test_bayes(data):
     test_set = data[:split]
     test_features = [x[0] for x in test_set]
     test_categories = [x[1] for x in test_set]
-    classifier = NaiveBayesClassifier.train(train_set)
-    # classifier = DecisionTreeClassifier.train(train_set)
+    if not TOGGLE:
+        print("Training a Naive Bayes Classifier...")
+        classifier = NaiveBayesClassifier.train(train_set)
+    else:
+        print("Training a Decision Tree Classifier...")
+        classifier = DecisionTreeClassifier.train(train_set)
     # accuracy = get_accuracy(test_features, test_categories, classifier)
     # print(accuracy)
     print_metrics(test_features, test_categories, classifier)
@@ -389,7 +393,7 @@ def print_metrics(test_features, test_categories, classifier):
     precision, recall, fscore, _ = precision_recall_fscore_support(test_categories, guesses, average='macro')
     print("------------------------------")
     print("Accuracy:\t\t" + str(get_accuracy(test_categories, guesses)))
-    print("Precision:\t" + str(precision))
+    print("Precision:\t\t" + str(precision))
     print("Recall:\t\t\t" + str(recall))
     print("F-Score:\t\t" + str(fscore))
     print("------------------------------")
@@ -411,16 +415,19 @@ def parse_paragraphs(text):
 
 # welcome
 def main():
+    global TOGGLE
     import sys
     args = sys.argv[1:]
     if len(args) > 0:
         if (args[0] == "-DTC"):
-            toggle = True
+            TOGGLE = True
     nltk.download('averaged_perceptron_tagger')
     nltk.download('stopwords')
     # download corpus
     download_zip(TRAINING_DATA, "training_set")
     download_zip(TRAINING_DATA_CURRENT, "training_set_current")
+
+    print("WARNING: Program may take a minute to run, please be patient. :)")
 
     # train and test each model
     print("------------------------------")
