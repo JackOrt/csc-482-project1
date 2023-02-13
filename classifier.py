@@ -1,4 +1,4 @@
-# import nltk
+
 import random
 import os
 import codecs
@@ -6,7 +6,6 @@ import re
 from enum import Enum
 from statistics import variance
 from bs4 import BeautifulSoup
-# from nltk.corpus import movie_reviews
 import nltk
 from nltk.corpus import wordnet as wn
 from nltk.corpus import stopwords
@@ -16,6 +15,7 @@ from nltk.classify import NaiveBayesClassifier
 from nltk.stem import WordNetLemmatizer as ltz
 from nltk.classify import DecisionTreeClassifier
 from nltk.tag import pos_tag
+from sklearn.metrics import precision_recall_fscore_support
 
 TRAINING_DATA = "http://users.csc.calpoly.edu/~foaad/proj1F21_files.zip"
 TRAINING_DATA_CURRENT = "http://users.csc.calpoly.edu/~foaad/proj1S23_files.zip"
@@ -313,6 +313,24 @@ def features_author_paras(directory):
                 data.append((features, found[0]))              
     return data
 
+def features_author_paras_EC(directory):
+    data = []
+    sw = set(stopwords.words('english'))
+    for html in os.listdir(directory):
+        with open(os.path.join(directory, html), "r", encoding='utf-8') as file:
+            raw = BeautifulSoup(file, 'html.parser').get_text()
+            paras = parse_paragraphs(raw)
+            for para in paras:
+                sents = sent_tokenize(para)
+                words = word_tokenize(para)
+                features = get_repeated_author(sents, words, sw)
+                found = re.search("\d\d\d\d", html)
+                if "A" in html:
+                    data.append((features, "A", found[0]))
+                else:
+                    data.append((features, "B", found[0]))
+    return data
+
 # get all training data from a directory
 def get_features(directory, topic=True, ftype=FType.DOC):
     data = []
@@ -339,17 +357,36 @@ def train_test_bayes(data):
     test_categories = [x[1] for x in test_set]
     classifier = NaiveBayesClassifier.train(train_set)
     # classifier = DecisionTreeClassifier.train(train_set)
-    accuracy = get_accuracy(test_features, test_categories, classifier)
-    print(accuracy)
+    # accuracy = get_accuracy(test_features, test_categories, classifier)
+    # print(accuracy)
+    print_metrics(test_features, test_categories, classifier)
     return classifier
 
-def get_accuracy(test_features, test_categories, classifier):
-    correct = 0
+def train_test_extra_credit(data):
+    train_set = [(x[0], x[2]) for x in data if x[1] == "A"]
+    test_set = [(x[0], x[2]) for x in data if x[1] == "B"]
+    test_features = [x[0] for x in test_set]
+    test_categories = [x[1] for x in test_set]
+    classifier = NaiveBayesClassifier.train(train_set)
+    print_metrics(test_features, test_categories, classifier)
+    return classifier
+
+def print_metrics(test_features, test_categories, classifier):
     guesses = classifier.classify_many(test_features)
+    precision, recall, fscore, _ = precision_recall_fscore_support(test_categories, guesses, average='macro')
+    print("------------------------------")
+    print("Accuracy:\t\t" + str(get_accuracy(test_categories, guesses)))
+    print("Precision:\t" + str(precision))
+    print("Recall:\t\t\t" + str(recall))
+    print("F-Score:\t\t" + str(fscore))
+    print("------------------------------")
+
+def get_accuracy(test_categories, guesses):
+    correct = 0
     for i in range(len(guesses)):
         if test_categories[i] == guesses[i]:
             correct += 1
-    return float(correct) / len(test_features)
+    return float(correct) / len(test_categories)
 
 def parse_paragraphs(text):
     paras = text.split("\n")
@@ -368,22 +405,42 @@ def main():
     download_zip(TRAINING_DATA, "training_set")
     download_zip(TRAINING_DATA_CURRENT, "training_set_current")
 
-    # data = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")))
-    data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=False, ftype=FType.PARA)
-    data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=False, ftype=FType.PARA)
-    data = data_1 + data_2
-    train_test_bayes(data)
+    print("------------------------------")
+    # print("Topic by Document")
+    # data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=True, ftype=FType.DOC)
+    # data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=True, ftype=FType.DOC)
+    # data = data_1 + data_2
+    # train_test_bayes(data)
+    
+    # print("Topic by Paragraph")
+    # data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=True, ftype=FType.PARA)
+    # data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=True, ftype=FType.PARA)
+    # data = data_1 + data_2
+    # train_test_bayes(data)
 
-    # print(bayes.classify(input_features))
-    # training_tokens_A = get_dir_tokens(os.path.join(".", os.path.join("training_set", "proj1F21_files")), "A")
-    # training_tokens_B = get_dir_tokens(os.path.join(".", os.path.join("training_set", "proj1F21_files")), "B")
-    # new_training_tokens_A = get_dir_tokens(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), "A")
-    # new_training_tokens_B = get_dir_tokens(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), "B")
-    # print(training_tokens_A[100])
-    # print(training_tokens_B[100])
-    # print(new_training_tokens_A[100])
-    # print(new_training_tokens_B[100])
-    # print_file("./training_set/proj1F21_files/proj1F21_6728_A.html")
+    # print("Topic by Sentence")
+    # data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=True, ftype=FType.SENT)
+    # data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=True, ftype=FType.SENT)
+    # data = data_1 + data_2
+    # train_test_bayes(data)
+
+    # print("Author by Doc")
+    # data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=False, ftype=FType.DOC)
+    # data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=False, ftype=FType.DOC)
+    # data = data_1 + data_2
+    # train_test_bayes(data)
+
+    # print("Author by Paragraph")
+    # data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=False, ftype=FType.PARA)
+    # data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=False, ftype=FType.PARA)
+    # data = data_1 + data_2
+    # train_test_bayes(data)
+
+    print("Author by Paragraph Extra Credit")
+    data_1 = features_author_paras_EC(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")))
+    data_2 = features_author_paras_EC(os.path.join(".", os.path.join("training_set", "proj1F21_files")))
+    data = data_1 + data_2
+    train_test_extra_credit(data)
 
 if __name__=="__main__":
     main()
