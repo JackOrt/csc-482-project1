@@ -356,7 +356,7 @@ def get_features(directory, topic=True, ftype=FType.DOC):
 
 # train and test a classifier on the given data
 # print the associated metrics
-def train_test_bayes(data):
+def train_test_model(data):
     split = int(len(data) * TEST_SIZE)
     random.shuffle(data)
     train_set = data[split:]
@@ -390,7 +390,7 @@ def train_test_extra_credit(data):
 # for the given target set and response set
 def print_metrics(test_features, test_categories, classifier):
     guesses = classifier.classify_many(test_features)
-    precision, recall, fscore, _ = precision_recall_fscore_support(test_categories, guesses, average='macro')
+    precision, recall, fscore, _ = precision_recall_fscore_support(test_categories, guesses, average='macro', zero_division=0)
     print("------------------------------")
     print("Accuracy:\t\t" + str(get_accuracy(test_categories, guesses)))
     print("Precision:\t\t" + str(precision))
@@ -423,6 +423,9 @@ def main():
             TOGGLE = True
     nltk.download('averaged_perceptron_tagger')
     nltk.download('stopwords')
+    nltk.download('punkt')
+    nltk.download('wordnet')
+
     # download corpus
     download_zip(TRAINING_DATA, "training_set")
     download_zip(TRAINING_DATA_CURRENT, "training_set_current")
@@ -435,31 +438,31 @@ def main():
     data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=True, ftype=FType.DOC)
     data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=True, ftype=FType.DOC)
     data = data_1 + data_2
-    tbd = train_test_bayes(data)
+    tbd = train_test_model(data)
     
     print("Topic by Paragraph")
     data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=True, ftype=FType.PARA)
     data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=True, ftype=FType.PARA)
     data = data_1 + data_2
-    tbp = train_test_bayes(data)
+    tbp = train_test_model(data)
 
     print("Topic by Sentence")
     data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=True, ftype=FType.SENT)
     data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=True, ftype=FType.SENT)
     data = data_1 + data_2
-    tbs = train_test_bayes(data)
+    tbs = train_test_model(data)
 
     print("Author by Doc")
     data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=False, ftype=FType.DOC)
     data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=False, ftype=FType.DOC)
     data = data_1 + data_2
-    abd = train_test_bayes(data)
+    abd = train_test_model(data)
 
     print("Author by Paragraph")
     data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=False, ftype=FType.PARA)
     data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=False, ftype=FType.PARA)
     data = data_1 + data_2
-    abp = train_test_bayes(data)
+    abp = train_test_model(data)
 
     print("Author by Paragraph Extra Credit")
     data_1 = features_author_paras_EC(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")))
