@@ -355,8 +355,8 @@ def train_test_bayes(data):
     test_set = data[:split]
     test_features = [x[0] for x in test_set]
     test_categories = [x[1] for x in test_set]
-    classifier = NaiveBayesClassifier.train(train_set)
-    # classifier = DecisionTreeClassifier.train(train_set)
+    # classifier = NaiveBayesClassifier.train(train_set)
+    classifier = DecisionTreeClassifier.train(train_set)
     # accuracy = get_accuracy(test_features, test_categories, classifier)
     # print(accuracy)
     print_metrics(test_features, test_categories, classifier)
@@ -406,35 +406,35 @@ def main():
     download_zip(TRAINING_DATA_CURRENT, "training_set_current")
 
     print("------------------------------")
-    # print("Topic by Document")
-    # data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=True, ftype=FType.DOC)
-    # data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=True, ftype=FType.DOC)
-    # data = data_1 + data_2
-    # train_test_bayes(data)
+    print("Topic by Document")
+    data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=True, ftype=FType.DOC)
+    data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=True, ftype=FType.DOC)
+    data = data_1 + data_2
+    train_test_bayes(data)
     
-    # print("Topic by Paragraph")
-    # data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=True, ftype=FType.PARA)
-    # data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=True, ftype=FType.PARA)
-    # data = data_1 + data_2
-    # train_test_bayes(data)
+    print("Topic by Paragraph")
+    data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=True, ftype=FType.PARA)
+    data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=True, ftype=FType.PARA)
+    data = data_1 + data_2
+    train_test_bayes(data)
 
-    # print("Topic by Sentence")
-    # data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=True, ftype=FType.SENT)
-    # data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=True, ftype=FType.SENT)
-    # data = data_1 + data_2
-    # train_test_bayes(data)
+    print("Topic by Sentence")
+    data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=True, ftype=FType.SENT)
+    data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=True, ftype=FType.SENT)
+    data = data_1 + data_2
+    train_test_bayes(data)
 
-    # print("Author by Doc")
-    # data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=False, ftype=FType.DOC)
-    # data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=False, ftype=FType.DOC)
-    # data = data_1 + data_2
-    # train_test_bayes(data)
+    print("Author by Doc")
+    data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=False, ftype=FType.DOC)
+    data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=False, ftype=FType.DOC)
+    data = data_1 + data_2
+    train_test_bayes(data)
 
-    # print("Author by Paragraph")
-    # data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=False, ftype=FType.PARA)
-    # data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=False, ftype=FType.PARA)
-    # data = data_1 + data_2
-    # train_test_bayes(data)
+    print("Author by Paragraph")
+    data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=False, ftype=FType.PARA)
+    data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=False, ftype=FType.PARA)
+    data = data_1 + data_2
+    train_test_bayes(data)
 
     print("Author by Paragraph Extra Credit")
     data_1 = features_author_paras_EC(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")))
