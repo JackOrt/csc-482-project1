@@ -22,6 +22,8 @@ TRAINING_DATA_CURRENT = "http://users.csc.calpoly.edu/~foaad/proj1S23_files.zip"
 PATH_SIMILARITY_CUTOFF = 0.24
 TEST_SIZE = 0.2
 
+TOGGLE = False
+
 class FType(Enum):
     DOC = 1
     PARA = 2
@@ -399,6 +401,11 @@ def print_file(path):
         parse_paragraphs(raw)
 
 def main():
+    import sys
+    args = sys.argv[1:]
+    if len(args) > 0:
+        if (args[0] == "-DTC"):
+            toggle = True
     nltk.download('averaged_perceptron_tagger')
     nltk.download('stopwords')
 
