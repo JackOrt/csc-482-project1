@@ -6,6 +6,7 @@ import re
 from statistics import variance
 from bs4 import BeautifulSoup
 # from nltk.corpus import movie_reviews
+import nltk
 from nltk.corpus import wordnet as wn
 from nltk.tokenize import word_tokenize, sent_tokenize
 from nltk.classify import NaiveBayesClassifier
@@ -218,6 +219,8 @@ def get_accuracy(test_features, test_categories, classifier):
     return float(correct) / len(test_features)
 
 def main():
+    nltk.download('averaged_perceptron_tagger')
+
     download_zip(TRAINING_DATA, "training_set")
     download_zip(TRAINING_DATA_CURRENT, "training_set_current")
 
