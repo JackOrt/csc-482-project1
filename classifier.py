@@ -3,6 +3,7 @@ import random
 import os
 import codecs
 import re
+from enum import Enum
 from statistics import variance
 from bs4 import BeautifulSoup
 # from nltk.corpus import movie_reviews
@@ -20,6 +21,11 @@ TRAINING_DATA = "http://users.csc.calpoly.edu/~foaad/proj1F21_files.zip"
 TRAINING_DATA_CURRENT = "http://users.csc.calpoly.edu/~foaad/proj1S23_files.zip"
 PATH_SIMILARITY_CUTOFF = 0.24
 TEST_SIZE = 0.2
+
+class FType(Enum):
+    DOC = 1
+    PARA = 2
+    SENT = 3
 
 # features for both classifiers
 #   average sentence length
@@ -111,6 +117,8 @@ def get_sent_variance(sents):
     sent_lengths = []
     for sent in sents:
         sent_lengths.append(len(sent))
+    if len(sent_lengths) <= 1:
+        return None
     return variance(sent_lengths)
 
 # given a list of words, return
@@ -193,22 +201,7 @@ def print_file(path):
         raw = BeautifulSoup(file, 'html.parser').get_text()
         print(raw)
 
-def features_topic_doc(directory):
-    data = []
-    sw = set(stopwords.words('english'))
-    for html in os.listdir(directory):
-        if filter in html:
-            with open(os.path.join(directory, html), "r", encoding='utf-8') as file:
-                raw = BeautifulSoup(file, 'html.parser').get_text()
-                features = {}
-                sents = sent_tokenize(raw)
-                words = word_tokenize(raw)
-                features = get_repeated_topic(sents, words, sw)
-                if "A" in html:
-                    data.append((features, "A"))
-                else:
-                    data.append((features, "B"))             
-    return data
+
 
 def get_repeated_topic(sents, words, sw):
     features = {}
@@ -241,120 +234,101 @@ def get_repeated_author(sents, words, sw):
     features.update(bgrams)
     return features
 
+def features_topic_doc(directory):
+    data = []
+    sw = set(stopwords.words('english'))
+    for html in os.listdir(directory):
+        with open(os.path.join(directory, html), "r", encoding='utf-8') as file:
+            raw = BeautifulSoup(file, 'html.parser').get_text()
+            features = {}
+            sents = sent_tokenize(raw)
+            words = word_tokenize(raw)
+            features = get_repeated_topic(sents, words, sw)
+            if "A" in html:
+                data.append((features, "A"))
+            else:
+                data.append((features, "B"))             
+    return data
+
 def features_topic_sents(directory):
     data = []
     sw = set(stopwords.words('english'))
     for html in os.listdir(directory):
-        if filter in html:
-            with open(os.path.join(directory, html), "r", encoding='utf-8') as file:
-                raw = BeautifulSoup(file, 'html.parser').get_text()
-                features = {}
-                sents = sent_tokenize(raw)
-                for sent in sents:
-                    words = word_tokenize(sent)
-                    features = get_repeated_topic(sent, words, sw)
-                    if "A" in html:
-                        data.append((features, "A"))
-                    else:
-                        data.append((features, "B"))             
+        with open(os.path.join(directory, html), "r", encoding='utf-8') as file:
+            raw = BeautifulSoup(file, 'html.parser').get_text()
+            features = {}
+            sents = sent_tokenize(raw)
+            for sent in sents:
+                words = word_tokenize(sent)
+                features = get_repeated_topic(sent, words, sw)
+                if "A" in html:
+                    data.append((features, "A"))
+                else:
+                    data.append((features, "B"))             
     return data
 
 def features_topic_paras(directory):
     data = []
     sw = set(stopwords.words('english'))
     for html in os.listdir(directory):
-        if filter in html:
-            with open(os.path.join(directory, html), "r", encoding='utf-8') as file:
-                raw = BeautifulSoup(file, 'html.parser').get_text()
-                features = {}
-                paras = parse_paragraphs(raw)
-                for para in paras:
-                    sents = sent_tokenize(para)
-                    words = word_tokenize(para)
-                    features = get_repeated_topic(sents, words, sw)
-                    if "A" in html:
-                        data.append((features, "A"))
-                    else:
-                        data.append((features, "B"))             
+        with open(os.path.join(directory, html), "r", encoding='utf-8') as file:
+            raw = BeautifulSoup(file, 'html.parser').get_text()
+            features = {}
+            paras = parse_paragraphs(raw)
+            for para in paras:
+                sents = sent_tokenize(para)
+                words = word_tokenize(para)
+                features = get_repeated_topic(sents, words, sw)
+                if "A" in html:
+                    data.append((features, "A"))
+                else:
+                    data.append((features, "B"))             
     return data
 
 def features_author_doc(directory):
-    pass
-
-# get all training data from a directory
-def get_features(directory, filter="", topic=True):
     data = []
+    sw = set(stopwords.words('english'))
     for html in os.listdir(directory):
-        if filter in html:
-            with open(os.path.join(directory, html), "r", encoding='utf-8') as file:
-                raw = BeautifulSoup(file, 'html.parser').get_text()
-                paras = parse_paragraphs(raw)
-                sw = set(stopwords.words('english'))
-                features = {}
-                
-                for para in paras:
-                #both classifiers
-                    sents = sent_tokenize(raw)
-                    words = word_tokenize(raw)
-                    features["sent_len"] = get_average_sentence_length(sents)
-                    features["word_len"] = get_average_word_length(sents)
-                    features["num_sents"] = len(sents)
-                    features["num_words"] = len(words)
-                    bow = get_bag_o_words(words, sw)
-                    bgrams = get_bigrams(words)
-                    features.update(bow)
-                    features.update(bgrams)
-                    if topic:
-                        features["NNP"] = get_num_NNP(words)
-                        features["vehicle_dist"] = get_sim_count(words, "vehicle")
-                        features["person_dist"] = get_sim_count(words, "person")
-                        if "A" in html:
-                            data.append((features, "A"))
-                        else:
-                            data.append((features, "B"))
-                    else:
-                        features["punct_dens"] = get_punc_density(sents)
-                        features["tobe"] = get_tobe_count(sents)
-                        features["sent_var"] = get_sent_variance(sents)
-                        features["word_var"] = get_word_variance(words)
-                        found = re.search("\d\d\d\d", html)
-                        data.append((features, found[0]))              
+        with open(os.path.join(directory, html), "r", encoding='utf-8') as file:
+            raw = BeautifulSoup(file, 'html.parser').get_text()
+            sents = sent_tokenize(raw)
+            words = word_tokenize(raw)
+            features = get_repeated_author(sents, words, sw)
+            found = re.search("\d\d\d\d", html)
+            data.append((features, found[0]))              
+    return data
+
+def features_author_paras(directory):
+    data = []
+    sw = set(stopwords.words('english'))
+    for html in os.listdir(directory):
+        with open(os.path.join(directory, html), "r", encoding='utf-8') as file:
+            raw = BeautifulSoup(file, 'html.parser').get_text()
+            paras = parse_paragraphs(raw)
+            for para in paras:
+                sents = sent_tokenize(para)
+                words = word_tokenize(para)
+                features = get_repeated_author(sents, words, sw)
+                found = re.search("\d\d\d\d", html)
+                data.append((features, found[0]))              
     return data
 
 # get all training data from a directory
-def get_features_file(file_path, filter="", topic=False):
+def get_features(directory, topic=True, ftype=FType.DOC):
     data = []
-    with open(file_path, "r", encoding='utf-8') as file:
-        raw = file.read()
-        sents = sent_tokenize(raw)
-        words = word_tokenize(raw)
-        sw = set(stopwords.words('english'))
-        #both classifiers
-        features = {}
-        features["sent_len"] = get_average_sentence_length(sents)
-        features["word_len"] = get_average_word_length(sents)
-        features["num_sents"] = len(sents)
-        features["num_words"] = len(words)
-        bow = get_bag_o_words(words, sw)
-        bgrams = get_bigrams(words)
-        features.update(bow)
-        features.update(bgrams)
-        if topic:
-            features["NNP"] = get_num_NNP(words)
-            features["vehicle_dist"] = get_sim_count(words, "vehicle")
-            features["person_dist"] = get_sim_count(words, "person")
-            if "A" in file_path:
-                data.append((features, "A"))
-            else:
-                data.append((features, "B"))
+    if topic:
+        if ftype == FType.DOC:
+            data = features_topic_doc(directory)
+        elif ftype == FType.PARA:
+            data = features_topic_paras(directory)
         else:
-            features["punct_dens"] = get_punc_density(sents)
-            features["tobe"] = get_tobe_count(sents)
-            features["sent_var"] = get_sent_variance(sents)
-            features["word_var"] = get_word_variance(words)
-            #found = re.search("\d\d\d\d", file_path)
-            #data.append((features, found[0]))              
-        return features    
+            data = features_topic_sents(directory)
+    else:
+        if ftype == FType.DOC:
+            data = features_author_doc(directory)
+        elif ftype == FType.PARA:
+            data = features_author_paras(directory)
+    return data
 
 def train_test_bayes(data):
     split = int(len(data) * TEST_SIZE)
@@ -363,7 +337,6 @@ def train_test_bayes(data):
     test_set = data[:split]
     test_features = [x[0] for x in test_set]
     test_categories = [x[1] for x in test_set]
-
     classifier = NaiveBayesClassifier.train(train_set)
     # classifier = DecisionTreeClassifier.train(train_set)
     accuracy = get_accuracy(test_features, test_categories, classifier)
@@ -396,12 +369,12 @@ def main():
     download_zip(TRAINING_DATA_CURRENT, "training_set_current")
 
     # data = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")))
-    # data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")))
-    # data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")))
-    # data = data_1 + data_2
-    # train_test_bayes(data)
+    data_1 = get_features(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), topic=False, ftype=FType.PARA)
+    data_2 = get_features(os.path.join(".", os.path.join("training_set", "proj1F21_files")), topic=False, ftype=FType.PARA)
+    data = data_1 + data_2
+    train_test_bayes(data)
 
-    print(bayes.classify(input_features))
+    # print(bayes.classify(input_features))
     # training_tokens_A = get_dir_tokens(os.path.join(".", os.path.join("training_set", "proj1F21_files")), "A")
     # training_tokens_B = get_dir_tokens(os.path.join(".", os.path.join("training_set", "proj1F21_files")), "B")
     # new_training_tokens_A = get_dir_tokens(os.path.join(".", os.path.join("training_set_current", "proj1S23_files")), "A")
