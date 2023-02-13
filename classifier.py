@@ -5,6 +5,7 @@
 #Usage:        
 #NAIVE BAYES:       python classifier.py
 #DECISION TREE:     python classifier.py -DTC          
+
 import random
 import os
 import codecs
