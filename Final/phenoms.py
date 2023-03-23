@@ -5,7 +5,8 @@ from nltk.tokenize import sent_tokenize
 I_TEXT = 11
 I_FILEID = 4
 I_TIME = 8
-NEG_SENT_CUTOFF = 0.3
+NEG_SENT_CUTOFF = -0.95
+POS_SENT_CUTOFF = 0.95
 
 ###### potential phenoms #########
 # http://ai4reporters.org/CA_201720180AB447_96_54363_53047
@@ -28,7 +29,10 @@ def main():
     db.init()
     hearing = db.getHearing(54363)
     occ = negative_sentiment_detector(hearing)
-    print(formatVid(occ[0][I_FILEID], occ[0][I_TIME]))
+    for i in range(500):
+        occ = positive_sentiment_detector(db.getHearing(i))
+        for oc in occ:
+            print(formatVid(oc[I_FILEID], oc[I_TIME]))
 
     # hid = db.getHearingID("H4IEb-n5ABk")
     # print(hid)
@@ -57,13 +61,28 @@ def negative_sentiment_detector(hearing):
     sia = SentimentIntensityAnalyzer()
     for utt in hearing:
         sents = sent_tokenize(utt[I_TEXT])
-        neg = 0
+        comp = 0
         # find average negative sentament over an utterance
         for sent in sents:
             scores = sia.polarity_scores(sent)
-            neg += scores['neg']
-        neg /= len(sents)
-        if neg > NEG_SENT_CUTOFF:
+            comp += scores['compound']
+        comp /= len(sents)
+        if comp < NEG_SENT_CUTOFF:
+            occurences.append(utt)
+    return occurences
+
+def positive_sentiment_detector(hearing):
+    occurences = []
+    sia = SentimentIntensityAnalyzer()
+    for utt in hearing:
+        sents = sent_tokenize(utt[I_TEXT])
+        comp = 0
+        # find average negative sentament over an utterance
+        for sent in sents:
+            scores = sia.polarity_scores(sent)
+            comp += scores['compound']
+        comp /= len(sents)
+        if comp > POS_SENT_CUTOFF:
             occurences.append(utt)
     return occurences
         
