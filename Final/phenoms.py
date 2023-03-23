@@ -1,4 +1,5 @@
 import db
+from collections import defaultdict
 ###### potential phenoms #########
 # http://ai4reporters.org/CA_201720180AB447_96_54363_53047
 # bill has no opposition (no no votes)
@@ -32,10 +33,10 @@ def main():
             print(occurences)
 
 def common_sense_detector(hearing):
-    occurences = []
+    occurences = defaultdict(list)
     for utterance in hearing:
         if "common sense" in utterance[11]:
-            occurences.append(utterance)
+            occurences["common sense"].append(utterance)
     return occurences
 
 if __name__ == "__main__":
