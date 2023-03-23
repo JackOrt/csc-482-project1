@@ -18,7 +18,21 @@ import db
 
 def main():
     db.init()
-    print(db.getDiscussion(7))
+    import pprint
+    temp_list = []
+    i = 0
+    for i in range(7):
+        i+=1
+        temp_list.append(db.getDiscussion(i))
+
+    common_sense_detector(temp_list)
+
+def common_sense_detector(hearing):
+    for discussion in hearing:
+        for text in discussion:
+            print(text)
+
+
 
 if __name__ == "__main__":
     main()
