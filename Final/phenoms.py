@@ -19,20 +19,24 @@ import db
 def main():
     db.init()
     import pprint
-    temp_list = []
+    hearings = []
     i = 0
-    for i in range(7):
+    for i in range(99):
         i+=1
-        temp_list.append(db.getDiscussion(i))
+        hearings.append(db.getHearing(i))
 
-    common_sense_detector(temp_list)
+    test = db.getHearing(72)
+    for hearing in hearings:
+        occurences = common_sense_detector(hearing)
+        if len(occurences) > 0:
+            print(occurences)
 
 def common_sense_detector(hearing):
-    for discussion in hearing:
-        for text in discussion:
-            print(text)
-
-
+    occurences = []
+    for utterance in hearing:
+        if "common sense" in utterance[11]:
+            occurences.append(utterance)
+    return occurences
 
 if __name__ == "__main__":
     main()
