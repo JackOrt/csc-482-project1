@@ -9,7 +9,6 @@ import time
 # DATABASE credentials
 #This is a read-only user/password to the Amazon RDB instance: 
 #DO NOT SHARE!!! DO NOT MAKE THIS NOTEBOOK PUBLIC!!!
-connection = None
 creds = {}
 
 def init():
@@ -18,9 +17,6 @@ def init():
     myuser = os.getenv("USER")
     mypass = os.getenv("PASS")
     mydb = os.getenv("DB")
-    connection = pymysql.connect(
-    host=myhost, user=myuser, password=mypass, database=mydb
-    )
     creds["myhost"] = myhost
     creds["myuser"] = myuser
     creds["mypass"] = mypass
