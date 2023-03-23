@@ -18,8 +18,8 @@ import db
 
 def main():
     db.init()
-    
-
+    hid = db.getHearingID("H4IEb-n5ABk")
+    print(hid)
 
 
 
