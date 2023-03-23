@@ -20,7 +20,6 @@ def main():
     db.init()
     hid = db.getHearingID("H4IEb-n5ABk")
     print(hid)
-    import pprint
     hearings = []
     i = 0
     for i in range(99):
