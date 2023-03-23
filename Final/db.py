@@ -120,11 +120,11 @@ def getVotes(DiscussionID):
 
 
 def getDiscussion(DiscussionID):
-  connection = pymysql.connect(
-    host=creds["myhost"], user=creds["myuser"], password=creds["mypass"], database=creds["mydb"]
-  )
+    connection = pymysql.connect(
+        host=creds["myhost"], user=creds["myuser"], password=creds["mypass"], database=creds["mydb"]
+    )
 
-  sqltest = """
+    sqltest = """
 				select h.hid, bd.did, uid, v.vid, v.fileId as vid_file_id, p.pid, p.first, p.last, time, u.endTime, 
 				u.type, text, alignment, h.state, h.date
                 from Utterance u, Hearing h, Video v, BillDiscussion bd, Person p
@@ -135,13 +135,40 @@ def getDiscussion(DiscussionID):
                       u.pid = p.pid and
                       u.current = 1 and finalized = 1
                 order by vid, time
-LIMIT 100
-"""
-  with connection:
-    with connection.cursor() as cursor:
-      cursor.execute(sqltest,str(DiscussionID))
-      result = cursor.fetchall()
-      print(result)
+                LIMIT 100
+                """
+    result = None
+    with connection:
+        with connection.cursor() as cursor:
+            cursor.execute(sqltest,str(DiscussionID))
+            result = cursor.fetchall()
+    return result
+
+###### returns the information for a hearing
+def getHearing(HearingID):
+    connection = pymysql.connect(
+        host=creds["myhost"], user=creds["myuser"], password=creds["mypass"], database=creds["mydb"]
+    )
+
+    sqltest = """
+				select h.hid, bd.did, uid, v.vid, v.fileId as vid_file_id, p.pid, p.first, p.last, time, u.endTime, 
+				u.type, text, alignment, h.state, h.date
+                from Utterance u, Hearing h, Video v, BillDiscussion bd, Person p
+                where h.hid = % s and
+                      h.hid = bd.hid and
+                      bd.did = u.did and
+                      v.vid = u.vid and
+                      u.pid = p.pid and
+                      u.current = 1 and finalized = 1
+                order by vid, time
+                LIMIT 100
+                """
+    result = None
+    with connection:
+        with connection.cursor() as cursor:
+            cursor.execute(sqltest,str(HearingID))
+            result = cursor.fetchall()
+    return result
 
 # test for discussion_id 7
 # getDiscussion(7)
