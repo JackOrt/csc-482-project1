@@ -26,44 +26,45 @@ def init():
     creds["mypass"] = mypass
     creds["mydb"] = mydb
 
+########################## prints total number of utterances ##############################
 #Testing
-sql = "SELECT count(*) FROM Utterance"
+# sql = "SELECT count(*) FROM Utterance"
 
-with connection:
-    with connection.cursor() as cursor:
-      cursor.execute(sql)
-      result = cursor.fetchall()
+# with connection:
+#     with connection.cursor() as cursor:
+#       cursor.execute(sql)
+#       result = cursor.fetchall()
 
-for res in result:
-  print("Total number of utterances in database: ",str(res[0]))
+# for res in result:
+#   print("Total number of utterances in database: ",str(res[0]))
 
-  #This is code that gives all utterances of all legislators (extremely expensive, limited to 100)
-connection = pymysql.connect(
-  host=creds["myhost"], user=creds["myuser"], password=mypass, database=mydb
-)
+###############This is code that gives all utterances of all legislators (extremely expensive, limited to 100) #####################
+# connection = pymysql.connect(
+#   host=creds["myhost"], user=creds["myuser"], password=mypass, database=mydb
+# )
 
-sql2 = """
-SELECT U.uid, U.pid, P.first, P.last, U.did, U.text 
-FROM Utterance as U 
-LEFT JOIN Person as P on U.pid = P.pid
-LEFT JOIN PersonClassifications C on U.pid = C.pid
-WHERE U.state = 'CA' AND current = 1 AND finalized = 1 AND C.PersonType = "Legislator"
-LIMIT 10
-"""
+# sql2 = """
+# SELECT U.uid, U.pid, P.first, P.last, U.did, U.text 
+# FROM Utterance as U 
+# LEFT JOIN Person as P on U.pid = P.pid
+# LEFT JOIN PersonClassifications C on U.pid = C.pid
+# WHERE U.state = 'CA' AND current = 1 AND finalized = 1 AND C.PersonType = "Legislator"
+# LIMIT 10
+# """
 
-with connection:
-    with connection.cursor() as cursor:
-      cursor.execute(sql2)
-      result = cursor.fetchall()
-    for res in result:
-      print(str(res))
+# with connection:
+#     with connection.cursor() as cursor:
+#       cursor.execute(sql2)
+#       result = cursor.fetchall()
+#     for res in result:
+#       print(str(res))
     
 
-#This function returns a list of utterances, which is everything that was said by the person in DDDB CA
+####################This function returns a list of utterances, which is everything that was said by the person in DDDB CA ########################
 #Input: LegislatorID who is a valid ID of a California Legislator
 def getLegUtterances(LegislatorID):
   connection = pymysql.connect(
-    host=myhost, user=myuser, password=mypass, database=mydb
+    host=creds["myhost"], user=creds["myuser"], password=creds["mypass"], database=creds["mydb"]
   )
   sqltest = """
 SELECT U.uid, U.pid, P.first, P.last, U.did, U.text 
@@ -90,15 +91,16 @@ WHERE U.pid = %s AND
       result = cursor.fetchall()
   return [r[0] for r in result]
 
-leg10 = getLegUtterances(10)
-print("Testing... legislator pid=10 has",len(leg10),"utterances listed below\n",leg10)
+##### test for previous function
+# leg10 = getLegUtterances(10)
+# print("Testing... legislator pid=10 has",len(leg10),"utterances listed below\n",leg10)
 
 #This Function returns how every legislator voted in a bill discussion, 
 # it returns a list of (pid, vote) tuples given a single bill discussion ID as input
 
 def getVotes(DiscussionID):
   connection = pymysql.connect(
-    host=myhost, user=myuser, password=mypass, database=mydb
+    host=creds["myhost"], user=creds["myuser"], password=creds["mypass"], database=creds["mydb"]
   )
 
   sql = """ SELECT v.pid, v.result
@@ -118,10 +120,12 @@ def getVotes(DiscussionID):
   return [r for r in result]
 
 #Test for bill discussion #136
-getVotes(136)
+# getVotes(136)
+
+
 def getDiscussion(DiscussionID):
   connection = pymysql.connect(
-    host=myhost, user=myuser, password=mypass, database=mydb
+    host=creds["myhost"], user=creds["myuser"], password=creds["mypass"], database=creds["mydb"]
   )
 
   sqltest = """
@@ -143,5 +147,6 @@ LIMIT 100
       result = cursor.fetchall()
       print(result)
 
-getDiscussion(7)
+# test for discussion_id 7
+# getDiscussion(7)
 
