@@ -20,8 +20,25 @@ def main():
     db.init()
     hid = db.getHearingID("H4IEb-n5ABk")
     print(hid)
+    import pprint
+    hearings = []
+    i = 0
+    for i in range(99):
+        i+=1
+        hearings.append(db.getHearing(i))
 
+    test = db.getHearing(72)
+    for hearing in hearings:
+        occurences = common_sense_detector(hearing)
+        if len(occurences) > 0:
+            print(occurences)
 
+def common_sense_detector(hearing):
+    occurences = []
+    for utterance in hearing:
+        if "common sense" in utterance[11]:
+            occurences.append(utterance)
+    return occurences
 
 if __name__ == "__main__":
     main()
