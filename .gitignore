@@ -1,2 +1,5 @@
 training*
 *.env
+*.pyc
+Final/__pycache__/db.cpython-310.pyc
+Final/__pycache__/db.cpython-310.pyc
