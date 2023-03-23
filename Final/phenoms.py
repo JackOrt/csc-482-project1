@@ -36,7 +36,7 @@ def common_sense_detector(hearing):
     occurences = defaultdict(list)
     for utterance in hearing:
         if "common sense" in utterance[11]:
-            occurences["common sense"].append(utterance)
+            occurences[hearing].append(utterance)
     return occurences
 
 if __name__ == "__main__":
