@@ -170,6 +170,23 @@ def getHearing(HearingID):
             result = cursor.fetchall()
     return result
 
+######## returns the hearing id from a video file id #######
+def getHearingID(vid_file):
+    connection = pymysql.connect(
+        host=creds["myhost"], user=creds["myuser"], password=creds["mypass"], database=creds["mydb"]
+    )
+    sqltest_ = """
+				select v.hid
+                from Video v
+                where v.fileId = % s
+                """
+    result = None
+    with connection:
+        with connection.cursor() as cursor:
+            cursor.execute(sqltest_,str(vid_file))
+            result = cursor.fetchall()
+    return result[0][0]
+
 # test for discussion_id 7
 # getDiscussion(7)
 
