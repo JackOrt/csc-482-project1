@@ -30,15 +30,28 @@ POS_SENT_CUTOFF = 0.95
 # laughter
 
 def main():
+    target = "climate"
+
     db.init()
     hearing = db.getHearing(54363)
     occ = negative_sentiment_detector(hearing)
     for i in range(500):
-        #occ = positive_sentiment_detector(db.getHearing(i))
-        occ = get_word_utterances(db.getHearing(i), "environment")
+        occ_positive = positive_sentiment_detector(db.getHearing(i))
+        occ_word_utterances = get_word_utterances(db.getHearing(i), target)
         
-        for oc in occ:
-            print(formatVid(oc[I_FILEID], oc[I_TIME]))
+        if len(occ_positive) > 0:
+            print("Printing URLs for positive sentiments in hearing: " + str(db.getHearing(i)[0][0]))
+
+        for oc in occ_positive:
+            if oc != None:
+                print(formatVid(oc[I_FILEID], oc[I_TIME]))        
+
+        if len(occ_word_utterances) > 0:
+            print("Printing URLs for utterances of " + target + " in hearing: " + str(db.getHearing(i)[0][0]))
+
+        for oc in occ_word_utterances:
+            if oc != None:
+                print(formatVid(oc[I_FILEID], oc[I_TIME]))
 
     # hid = db.getHearingID("H4IEb-n5ABk")
     # print(hid)
@@ -54,19 +67,23 @@ def main():
     #     if len(occurences) > 0:
     #         print(occurences)
 
+def get_utterance_text(utterances, text):
+    for utterance in utterances:
+        if text in utterance[I_TEXT]:
+            return utterance
+
 def get_word_utterances(hearing, query):
     utterances = []
-    occurences = defaultdict(list)
     combined_utterances = []
 
     for utterance in hearing:
-        occurences[utterance] = utterance
-        combined_utterances.append(word_tokenize(utterance))
+        combined_utterances += word_tokenize(utterance[I_TEXT])
     
     utterance_text = Text(combined_utterances)
-    contexts = utterance_text.concordance(query)
-    for context in contexts:
-        utterances.append(occurences[context])
+    contexts = utterance_text.concordance_list(query)
+    if contexts is not None:
+        for context in contexts:
+            utterances.append(get_utterance_text(hearing, context.line.strip()))
 
     return utterances
 
@@ -150,4 +167,5 @@ def formatTime(offset):
 
 if __name__ == "__main__":
     download('vader_lexicon')
+    download('punkt')
     main()
