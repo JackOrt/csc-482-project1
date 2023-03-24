@@ -71,6 +71,28 @@ def main():
     #     if len(occurences) > 0:
     #         print(occurences)
 
+# given a hearing, returns the utterances with potential statistics
+def stats_detector(hearing):
+    banned = ["SB", "item", "Item", "Bill", "SCR", "Items", "items"]
+    block = False
+    occurences = []
+    for utterance in hearing:
+        sentences = sent_tokenize(utterance[I_TEXT])
+        for sentence in sentences:
+            pos_type = pos_tag(word_tokenize(sentence))
+            for word in banned:
+                if word in sentence:
+                    block = True
+                    break
+            if not block: 
+                for i in range(len(pos_type)):
+                    if i != 0:
+                        prev, tag = pos_type[i - 1]
+                        word, tag = pos_type[i]
+                        if tag == "CD" and prev not in banned:
+                            occurences.append(sentence)
+    return occurences
+
 def get_utterance_text(utterances, text):
     for utterance in utterances:
         if text in utterance[I_TEXT]:
