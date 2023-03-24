@@ -1,12 +1,13 @@
 import db
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
-from nltk.tokenize import sent_tokenize
+from nltk.tokenize import sent_tokenize, word_tokenize
+from nltk import ne_chunk, pos_tag
 
 I_TEXT = 11
 I_FILEID = 4
 I_TIME = 8
-NEG_SENT_CUTOFF = -0.95
-POS_SENT_CUTOFF = 0.95
+NEG_SENT_CUTOFF = -0.5
+POS_SENT_CUTOFF = 0.5
 
 ###### potential phenoms #########
 # http://ai4reporters.org/CA_201720180AB447_96_54363_53047
@@ -28,25 +29,7 @@ POS_SENT_CUTOFF = 0.95
 def main():
     db.init()
     hearing = db.getHearing(54363)
-    occ = negative_sentiment_detector(hearing)
-    for i in range(500):
-        occ = positive_sentiment_detector(db.getHearing(i))
-        for oc in occ:
-            print(formatVid(oc[I_FILEID], oc[I_TIME]))
-
-    # hid = db.getHearingID("H4IEb-n5ABk")
-    # print(hid)
-    # hearings = []
-    # i = 0
-    # for i in range(99):
-    #     i+=1
-    #     hearings.append(db.getHearing(i))
-
-    # test = db.getHearing(72)
-    # for hearing in hearings:
-    #     occurences = common_sense_detector(hearing)
-    #     if len(occurences) > 0:
-    #         print(occurences)
+    print(entity_detector(hearing))
 
 def common_sense_detector(hearing):
     occurences = []
@@ -86,6 +69,26 @@ def positive_sentiment_detector(hearing):
             occurences.append(utt)
     return occurences
         
+# return a set of named entities in a hearing
+def entity_detector(hearing):
+    banned = ["File", "Pass", "Aye", "Was", "Good", "Amen", "Part", "Please", "Has", "INAUDIBLE"]
+    entities = set()
+    sia = SentimentIntensityAnalyzer()
+    for utt in hearing:
+        sents = sent_tokenize(utt[I_TEXT])
+        for sent in sents:
+            words = word_tokenize(sent)
+            for word in banned:
+                if word in words:
+                    words.remove(word)
+            tagged = pos_tag(words)
+            ne_tree = ne_chunk(tagged)
+            if len(words) > 3:
+                ne_list = [c.leaves() for c in ne_tree.subtrees(lambda s: s.label() != "PERSON" and len(s.label()) > 1)]
+                for entity in ne_list:
+                    new_entity = " ".join([e[0] for e in entity])
+                    entities.add(new_entity)
+    return entities
 
 #formats video as a link 
 def formatVid(id, offset=0):
