@@ -39,7 +39,7 @@ def main():
     occ = negative_sentiment_detector(hearing)
     for i in range(500):
         occ_positive = positive_sentiment_detector(db.getHearing(i))
-        occ_word_utterances = get_word_utterances(db.getHearing(i), target)
+        found, occ_word_utterances = get_word_utterances(db.getHearing(i), target)
         
         if len(occ_positive) > 0:
             print("Printing URLs for positive sentiments in hearing: " + str(db.getHearing(i)[0][0]))
@@ -49,7 +49,8 @@ def main():
                 print(formatVid(oc[I_FILEID], oc[I_TIME]))        
 
         if len(occ_word_utterances) > 0:
-            print("Printing URLs for utterances of " + target + " in hearing: " + str(db.getHearing(i)[0][0]))
+            if found:
+                print("Printing URLs for utterances of " + target + " in hearing: " + str(db.getHearing(i)[0][0]))
 
         for oc in occ_word_utterances:
             if oc != None:
@@ -77,7 +78,7 @@ def get_utterance_text(utterances, text):
 def get_word_utterances(hearing, query):
     utterances = []
     combined_utterances = []
-
+    found = False
     for utterance in hearing:
         combined_utterances += word_tokenize(utterance[I_TEXT])
     
@@ -86,8 +87,11 @@ def get_word_utterances(hearing, query):
     if contexts is not None:
         for context in contexts:
             utterances.append(get_utterance_text(hearing, context.line.strip()))
+            found = True
+            if utterances[0] == None:
+                found = False
 
-    return utterances
+    return found, utterances
 
 def common_sense_detector(hearing):
     occurences = defaultdict(list)
@@ -190,4 +194,6 @@ def formatTime(offset):
 if __name__ == "__main__":
     download('vader_lexicon')
     download('punkt')
+    download('maxent_ne_chunker')
+    download('words')
     main()
