@@ -1,4 +1,8 @@
 import db
+from nltk import word_tokenize
+from nltk import download 
+from nltk import Text
+from collections import defaultdict
 from nltk.sentiment.vader import SentimentIntensityAnalyzer
 from nltk.tokenize import sent_tokenize, word_tokenize
 from nltk import ne_chunk, pos_tag
@@ -27,12 +31,66 @@ POS_SENT_CUTOFF = 0.5
 # laughter
 
 def main():
+    target = "climate"
+
     db.init()
     hearing = db.getHearing(54363)
     print(entity_detector(hearing))
+    occ = negative_sentiment_detector(hearing)
+    for i in range(500):
+        occ_positive = positive_sentiment_detector(db.getHearing(i))
+        occ_word_utterances = get_word_utterances(db.getHearing(i), target)
+        
+        if len(occ_positive) > 0:
+            print("Printing URLs for positive sentiments in hearing: " + str(db.getHearing(i)[0][0]))
+
+        for oc in occ_positive:
+            if oc != None:
+                print(formatVid(oc[I_FILEID], oc[I_TIME]))        
+
+        if len(occ_word_utterances) > 0:
+            print("Printing URLs for utterances of " + target + " in hearing: " + str(db.getHearing(i)[0][0]))
+
+        for oc in occ_word_utterances:
+            if oc != None:
+                print(formatVid(oc[I_FILEID], oc[I_TIME]))
+
+    # hid = db.getHearingID("H4IEb-n5ABk")
+    # print(hid)
+    # hearings = []
+    # i = 0
+    # for i in range(99):
+    #     i+=1
+    #     hearings.append(db.getHearing(i))
+
+    # test = db.getHearing(72)
+    # for hearing in hearings:
+    #     occurences = common_sense_detector(hearing)
+    #     if len(occurences) > 0:
+    #         print(occurences)
+
+def get_utterance_text(utterances, text):
+    for utterance in utterances:
+        if text in utterance[I_TEXT]:
+            return utterance
+
+def get_word_utterances(hearing, query):
+    utterances = []
+    combined_utterances = []
+
+    for utterance in hearing:
+        combined_utterances += word_tokenize(utterance[I_TEXT])
+    
+    utterance_text = Text(combined_utterances)
+    contexts = utterance_text.concordance_list(query)
+    if contexts is not None:
+        for context in contexts:
+            utterances.append(get_utterance_text(hearing, context.line.strip()))
+
+    return utterances
 
 def common_sense_detector(hearing):
-    occurences = []
+    occurences = defaultdict(list)
     for utterance in hearing:
         if "common sense" in utterance[I_TEXT]:
             occurences.append(utterance)
@@ -130,4 +188,6 @@ def formatTime(offset):
 
 
 if __name__ == "__main__":
+    download('vader_lexicon')
+    download('punkt')
     main()
