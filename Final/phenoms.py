@@ -10,8 +10,8 @@ from nltk import ne_chunk, pos_tag
 I_TEXT = 11
 I_FILEID = 4
 I_TIME = 8
-NEG_SENT_CUTOFF = -0.5
-POS_SENT_CUTOFF = 0.5
+NEG_SENT_CUTOFF = -0.9
+POS_SENT_CUTOFF = 0.9
 
 ###### potential phenoms #########
 # http://ai4reporters.org/CA_201720180AB447_96_54363_53047
@@ -37,12 +37,13 @@ def main():
     hearing = db.getHearing(54363)
     print(entity_detector(hearing))
     occ = negative_sentiment_detector(hearing)
-    for i in range(500):
-        occ_positive = positive_sentiment_detector(db.getHearing(i))
-        found, occ_word_utterances = get_word_utterances(db.getHearing(i), target)
+    for i in range(50):
+        hearing = db.getHearing(i)
+        occ_positive = positive_sentiment_detector(hearing)
+        found, occ_word_utterances = get_word_utterances(hearing, target)
         
         if len(occ_positive) > 0:
-            print("Printing URLs for positive sentiments in hearing: " + str(db.getHearing(i)[0][0]))
+            print("Printing URLs for positive sentiments in hearing: " + str(i))
 
         for oc in occ_positive:
             if oc != None:
@@ -50,7 +51,7 @@ def main():
 
         if len(occ_word_utterances) > 0:
             if found:
-                print("Printing URLs for utterances of " + target + " in hearing: " + str(db.getHearing(i)[0][0]))
+                print("Printing URLs for utterances of " + target + " in hearing: " + str(i))
 
         for oc in occ_word_utterances:
             if oc != None:
